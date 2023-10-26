@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, abort, session, jsonify
 import json
 import os.path
 from werkzeug.utils import secure_filename
@@ -10,7 +10,7 @@ app.secret_key = 'someRandomStrongKey'  # used to encrypt the session cookie
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    return render_template('home.html', codes=session.keys())
 
 
 # provide a list of methods that are allowed, GET is default
@@ -39,6 +39,8 @@ def your_url():  # we can't use - in function names
 
         with open('urls.json', 'w') as url_file:
             json.dump(urls, url_file)
+            # session is a dictionary that is available to all the routes in the application
+            session[request.form['code']] = True
 
         """
         render_template looks for files in templates folder
@@ -70,3 +72,8 @@ def redirect_to_url(code):
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('page_not_found.html'), 404
+
+
+@app.route('/api')
+def session_api():
+    return jsonify(list(session.keys()))
